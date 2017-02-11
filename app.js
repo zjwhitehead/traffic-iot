@@ -1,4 +1,5 @@
 var awsIot = require('aws-iot-device-sdk');
+//var Gpio = require('onoff').Gpio;
 
 //
 // Replace the values of '<YourUniqueClientIdentifier>' and '<YourAWSRegion>'
@@ -16,17 +17,22 @@ var thingShadows = awsIot.thingShadow({
     region: 'us-east-1'
 });
 
+
+//var rled = new Gpio(14, 'out'),
+//    yled = new Gpio(15, 'out'),
+//    gled = new Gpio(16, 'out');
+
 //
 // Client token value returned from thingShadows.update() operation
 //
 var clientTokenUpdate;
 
 //
-// Simulated device values
+// Set red to on by default
 //
-var rval = false;
-var yval = false;
-var gval = false;
+var rval = true, 
+    yval = false, 
+    gval = false;
 
 
 thingShadows.on('connect', function() {
@@ -34,16 +40,16 @@ thingShadows.on('connect', function() {
 // After connecting to the AWS IoT platform, register interest in the
 // Thing Shadow named 'RGBLedLamp'.
 //
-    thingShadows.register( 'TrafficLight', {}, function() {
+  thingShadows.register( 'TrafficLight', {}, function() {
 
 // Once registration is complete, update the Thing Shadow named
-// 'RGBLedLamp' with the latest device state and save the clientToken
+// 'TrafficLight' with the latest device state and save the clientToken
 // so that we can correlate it with status or timeout events.
 //
 // Thing shadow state
 //
   var trafficLightState = {"state":{"desired":{"red":rval, "yellow":yval, "green":gval}}};
-  clientTokenUpdate = thingShadows.update('TrafficLight', rgbLedLampState  );
+  clientTokenUpdate = thingShadows.update('TrafficLight', trafficLightState  );
 //
 // The update method returns a clientToken; if non-null, this value will
 // be sent in a 'status' event when the operation completes, allowing you
@@ -52,16 +58,15 @@ thingShadows.on('connect', function() {
 // you'll need to wait until it completes (or times out) before updating the 
 // shadow.
 //
-       if (clientTokenUpdate === null)
-       {
-          console.log('update shadow failed, operation still in progress');
-       }
-    });
+    if (clientTokenUpdate === null)
+     {
+        console.log('update shadow failed, operation still in progress');
+     }
+  });
 
 thingShadows.on('status', 
     function(thingName, stat, clientToken, stateObject) {
-       console.log('received '+stat+' on '+thingName+': '+
-                   JSON.stringify(stateObject));
+      // console.log('received '+stat+' on '+thingName+': '+ JSON.stringify(stateObject));
 //
 // These events report the status of update(), get(), and delete() 
 // calls.  The clientToken value associated with the event will have
@@ -73,14 +78,16 @@ thingShadows.on('status',
 
 thingShadows.on('delta', 
     function(thingName, stateObject) {
-       console.log('received delta on '+thingName+': '+
-                   JSON.stringify(stateObject));
+      // console.log('received delta on '+thingName+': '+  JSON.stringify(stateObject));
+       var states = stateObject.state;
+       changeLight(states.red, states.yellow, states.green);
     });
 
 thingShadows.on('timeout',
     function(thingName, clientToken) {
        console.log('received timeout on '+thingName+
                    ' with token: '+ clientToken);
+
 //
 // In the event that a shadow operation times out, you'll receive
 // one of these events.  The clientToken value associated with the
@@ -88,4 +95,26 @@ thingShadows.on('timeout',
 // call to get(), update(), or delete().
 //
     });
+
+
+});
+
+var changeLight = function(rstate, ystate, gstate ) {
+  console.log("red =", rstate);
+  console.log("yellow =", ystate);
+  console.log("green =", gstate);
+  //rled.writeSync(rstate);
+  //yled.writeSync(ystate);
+  //gled.writeSync(gstate);
+
+  
+};
+
+// cleanup
+process.on('SIGINT', function () {
+  //rled.unexport();
+  //yled.unexport();
+  //gled.unexport();
+  console.log("shutting down");
+  process.exit();
 });
