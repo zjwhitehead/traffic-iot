@@ -18,9 +18,9 @@ var thingShadows = awsIot.thingShadow({
 });
 
 
-//var rled = new Gpio(14, 'out'),
-//    yled = new Gpio(15, 'out'),
-//    gled = new Gpio(16, 'out');
+//var rled = new Gpio(13, 'out'),
+//    yled = new Gpio(19, 'out'),
+//    gled = new Gpio(26, 'out');
 
 //
 // Client token value returned from thingShadows.update() operation
