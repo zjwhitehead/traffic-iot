@@ -1,5 +1,7 @@
+var onPi = process.arch == 'arm' ? true : false;
+
 var awsIot = require('aws-iot-device-sdk');
-//var Gpio = require('onoff').Gpio;
+if (onPi) var Gpio = require('onoff').Gpio;
 
 //
 // Replace the values of '<YourUniqueClientIdentifier>' and '<YourAWSRegion>'
@@ -17,23 +19,23 @@ var thingShadows = awsIot.thingShadow({
     region: 'us-east-1'
 });
 
+if (onPi) {
+  console.log("Running on Raspberry Pi");
+  var rled = new Gpio(16, 'out'),
+      yled = new Gpio(20, 'out'),
+      gled = new Gpio(21, 'out');
+}
 
-//var rled = new Gpio(13, 'out'),
-//    yled = new Gpio(19, 'out'),
-//    gled = new Gpio(26, 'out');
-
-//
 // Client token value returned from thingShadows.update() operation
-//
 var clientTokenUpdate;
 
 //
 // Set red to on by default
+// onoff prefers binary
 //
-var rval = true, 
-    yval = false, 
-    gval = false;
-
+var rval = 1,
+    yval = 0,
+    gval = 0;
 
 thingShadows.on('connect', function() {
 //
@@ -55,7 +57,7 @@ thingShadows.on('connect', function() {
 // be sent in a 'status' event when the operation completes, allowing you
 // to know whether or not the update was successful.  If the update method
 // returns null, it's because another operation is currently in progress and
-// you'll need to wait until it completes (or times out) before updating the 
+// you'll need to wait until it completes (or times out) before updating the
 // shadow.
 //
     if (clientTokenUpdate === null)
@@ -64,11 +66,11 @@ thingShadows.on('connect', function() {
      }
   });
 
-thingShadows.on('status', 
+thingShadows.on('status',
     function(thingName, stat, clientToken, stateObject) {
       // console.log('received '+stat+' on '+thingName+': '+ JSON.stringify(stateObject));
 //
-// These events report the status of update(), get(), and delete() 
+// These events report the status of update(), get(), and delete()
 // calls.  The clientToken value associated with the event will have
 // the same value which was returned in an earlier call to get(),
 // update(), or delete().  Use status events to keep track of the
@@ -76,7 +78,7 @@ thingShadows.on('status',
 //
     });
 
-thingShadows.on('delta', 
+thingShadows.on('delta',
     function(thingName, stateObject) {
       // console.log('received delta on '+thingName+': '+  JSON.stringify(stateObject));
        var states = stateObject.state;
@@ -96,25 +98,27 @@ thingShadows.on('timeout',
 //
     });
 
-
 });
 
 var changeLight = function(rstate, ystate, gstate ) {
-  console.log("red =", rstate);
-  console.log("yellow =", ystate);
-  console.log("green =", gstate);
-  //rled.writeSync(rstate);
-  //yled.writeSync(ystate);
-  //gled.writeSync(gstate);
+  console.log("r = " + rstate + " y = " + ystate + " g = " + gstate);
+  if (onPi) {
+    rled.writeSync(rstate);
+    yled.writeSync(ystate);
+    gled.writeSync(gstate);
+  }else {
 
-  
+  }
+
 };
 
 // cleanup
 process.on('SIGINT', function () {
-  //rled.unexport();
-  //yled.unexport();
-  //gled.unexport();
   console.log("shutting down");
+  if (onPi) {
+    rled.unexport();
+    yled.unexport();
+    gled.unexport();
+  }
   process.exit();
 });
