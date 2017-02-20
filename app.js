@@ -31,17 +31,17 @@ var clientTokenUpdate;
 
 //
 // Set red to on by default
-// onoff prefers binary
 //
-var rval = 1,
-    yval = 0,
-    gval = 0;
+var rval = true,
+    yval = false,
+    gval = false;
 
 thingShadows.on('connect', function() {
 //
 // After connecting to the AWS IoT platform, register interest in the
-// Thing Shadow named 'RGBLedLamp'.
+// Thing Shadow named 'TrafficLight'.
 //
+  getLight();
   thingShadows.register( 'TrafficLight', {}, function() {
 
 // Once registration is complete, update the Thing Shadow named
@@ -50,8 +50,13 @@ thingShadows.on('connect', function() {
 //
 // Thing shadow state
 //
-  var trafficLightState = {"state":{"desired":{"red":rval, "yellow":yval, "green":gval}}};
-  clientTokenUpdate = thingShadows.update('TrafficLight', trafficLightState  );
+  var trafficLightState = {"state":{"desired":{
+    "red":rval,
+    "yellow":yval,
+    "green":gval
+  }}};
+
+  clientTokenUpdate = thingShadows.update('TrafficLight', trafficLightState);
 //
 // The update method returns a clientToken; if non-null, this value will
 // be sent in a 'status' event when the operation completes, allowing you
@@ -81,8 +86,13 @@ thingShadows.on('status',
 thingShadows.on('delta',
     function(thingName, stateObject) {
       // console.log('received delta on '+thingName+': '+  JSON.stringify(stateObject));
-       var states = stateObject.state;
-       changeLight(states.red, states.yellow, states.green);
+      if(thingName == "TrafficLight"){
+         var states = stateObject.state;
+         rval = states.red;
+         yval = states.yellow;
+         gval = states.green;
+         setLight();
+       }
     });
 
 thingShadows.on('timeout',
@@ -100,16 +110,25 @@ thingShadows.on('timeout',
 
 });
 
-var changeLight = function(rstate, ystate, gstate ) {
+var setLight = function() {
   console.log("r = " + rstate + " y = " + ystate + " g = " + gstate);
   if (onPi) {
-    rled.writeSync(rstate);
-    yled.writeSync(ystate);
-    gled.writeSync(gstate);
-  }else {
-
+    // onoff prefers binary
+    rled.writeSync(Number(rstate));
+    yled.writeSync(Number(ystate));
+    gled.writeSync(Number(gstate));
   }
+};
 
+var getLight = function() {
+  console.log("r = " + rstate + " y = " + ystate + " g = " + gstate);
+  if (onPi) {
+    rval = rled.readSync();
+    yval = yled.readSync();
+    gval = gled.readSync();
+  }else{
+    console.log("getLight not supported");
+  }
 };
 
 // cleanup
