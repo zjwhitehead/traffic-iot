@@ -41,22 +41,14 @@ thingShadows.on('connect', function() {
 // After connecting to the AWS IoT platform, register interest in the
 // Thing Shadow named 'TrafficLight'.
 //
-  getLight();
   thingShadows.register( 'TrafficLight', {}, function() {
 
-// Once registration is complete, update the Thing Shadow named
-// 'TrafficLight' with the latest device state and save the clientToken
+// Once registration is complete, get the Thing Shadow named
+// 'TrafficLight' latest device state and save the clientToken
 // so that we can correlate it with status or timeout events.
 //
-// Thing shadow state
-//
-  var trafficLightState = {"state":{"desired":{
-    "red":rval,
-    "yellow":yval,
-    "green":gval
-  }}};
 
-  clientTokenUpdate = thingShadows.update('TrafficLight', trafficLightState);
+  clientTokenGet = thingShadows.get('TrafficLight');
 //
 // The update method returns a clientToken; if non-null, this value will
 // be sent in a 'status' event when the operation completes, allowing you
@@ -65,15 +57,25 @@ thingShadows.on('connect', function() {
 // you'll need to wait until it completes (or times out) before updating the
 // shadow.
 //
-    if (clientTokenUpdate === null)
+    if (clientTokenGet === null)
      {
         console.log('update shadow failed, operation still in progress');
+     } else {
+       console.log("Get result ", JSON.stringify(clientTokenGet));
      }
   });
 
 thingShadows.on('status',
     function(thingName, stat, clientToken, stateObject) {
-      // console.log('received '+stat+' on '+thingName+': '+ JSON.stringify(stateObject));
+     console.log('received '+stat+' on '+thingName+': '+ JSON.stringify(stateObject));
+
+     if (stat == "accepted" && thingName == "TrafficLight") {
+       var lastState = stateObject.state.desired;
+       rval = lastState.red;
+       yval = lastState.yellow;
+       gval = lastState.green;
+       setLight();
+     }
 //
 // These events report the status of update(), get(), and delete()
 // calls.  The clientToken value associated with the event will have
@@ -111,22 +113,21 @@ thingShadows.on('timeout',
 });
 
 var setLight = function() {
-  console.log("r = " + rstate + " y = " + ystate + " g = " + gstate);
+  console.log("setting r = " + rval + ", y = " + yval + ", g = " + gval);
   if (onPi) {
     // onoff prefers binary
-    rled.writeSync(Number(rstate));
-    yled.writeSync(Number(ystate));
-    gled.writeSync(Number(gstate));
+    rled.writeSync(Number(rval));
+    yled.writeSync(Number(yval));
+    gled.writeSync(Number(gval));
   }
 };
 
 var getLight = function() {
-  console.log("r = " + rstate + " y = " + ystate + " g = " + gstate);
   if (onPi) {
-    rval = rled.readSync();
-    yval = yled.readSync();
-    gval = gled.readSync();
-  }else{
+    rval = Boolean(rled.readSync());
+    yval = Boolean(yled.readSync());
+    gval = Boolean(gled.readSync());
+  } else  {
     console.log("getLight not supported");
   }
 };
