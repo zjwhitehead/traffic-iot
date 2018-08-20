@@ -1,4 +1,6 @@
 # Traffic-IOT
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fzjwhitehead%2Ftraffic-iot.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fzjwhitehead%2Ftraffic-iot?ref=badge_shield)
+
 **Control a 3 LED traffic light**
 
 Uses [AWS IOT SDK](https://aws.amazon.com/iot/)
@@ -29,3 +31,7 @@ For example, to set the desired state using the AWS IOT thing rest API
 }
 ```
 Note: each LED can be toggled independently
+
+
+## License
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fzjwhitehead%2Ftraffic-iot.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fzjwhitehead%2Ftraffic-iot?ref=badge_large)
